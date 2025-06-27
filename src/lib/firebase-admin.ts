@@ -1,15 +1,14 @@
 import * as admin from 'firebase-admin';
 import { credential, ServiceAccount } from 'firebase-admin';
+import localServiceAccount from '../../basse-brodd-firebase-adminsdk-fbsvc-f67d5bffe1.json'; 
 
 let serviceAccountJson: ServiceAccount | undefined;
 
 if (process.env.NODE_ENV === 'development') {
   try {
-    const localServiceAccount = require('../../basse-brodd-firebase-adminsdk-fbsvc-f67d5bffe1.json');
-    serviceAccountJson = localServiceAccount as ServiceAccount;
+    serviceAccountJson = localServiceAccount as ServiceAccount; 
   } catch (e) {
-    console.warn('Local Firebase service account file not found. Falling back to environment variable for local development if set.');
-
+    console.warn('Local Firebase service account file not found. Falling back to environment variable for local development if set.', e); 
   }
 }
 
@@ -36,9 +35,8 @@ if (!admin.apps.length) {
     console.log('Firebase Admin SDK initialized successfully.');
   } catch (error) {
     console.error('Firebase Admin SDK initialization error:', error);
-    throw new Error('Failed to initialize Firebase Admin SDK.');
+    throw error;
   }
 }
 
-const adminDb = admin.firestore();
-export { adminDb };
+export default admin.firestore();

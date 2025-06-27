@@ -34,8 +34,8 @@ export default function Custom404() {
             marginBottom: "1.5em",
           }}
         >
-          Oops! The page you're looking for doesn't exist or has been moved.
-          Please check the URL or try navigating from our homepage.
+          Oops! The page you&apos;re looking for doesn&apos;t exist or has been
+          moved. Please check the URL or try navigating from our homepage.
         </p>
         <Link href="/" passHref>
           <button
@@ -48,10 +48,10 @@ export default function Custom404() {
               borderRadius: "5px",
               cursor: "pointer",
               textDecoration: "none",
-              fontWeight: "bold",
+              marginTop: "1.5em",
             }}
           >
-            Go back to the homepage
+            Go to Homepage
           </button>
         </Link>
       </div>

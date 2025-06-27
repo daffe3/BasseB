@@ -132,7 +132,7 @@ export default function LunchDeliveryPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         setSnackbarMessage("Order placed successfully!");
         setSnackbarSeverity("success");
         setSnackbarOpen(true);

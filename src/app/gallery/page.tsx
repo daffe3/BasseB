@@ -14,7 +14,13 @@ import GalleryItem from "../components/GalleryItem";
 import GalleryPagination from "../components/GalleryPagination";
 import ImageModal from "../components/ImageModal";
 
-const allGalleryItems = Array.from({ length: 20 }, (_, i) => ({
+interface GalleryItem {
+  id: number;
+  name: string;
+  imageSrc: string;
+}
+
+const allGalleryItems: GalleryItem[] = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1,
   name: `Placeholder Photo ${i + 1}`,
   imageSrc: `https://via.placeholder.com/600x400?text=Photo+${i + 1}`,
@@ -32,7 +38,7 @@ export default function GalleryPage() {
     : ITEMS_PER_PAGE_DESKTOP;
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null); // Corrected type
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -53,7 +59,7 @@ export default function GalleryPage() {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleImageClick = (item: any) => {
+  const handleImageClick = (item: GalleryItem) => {
     setSelectedImage(item);
     setIsModalOpen(true);
   };

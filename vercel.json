@@ -1,0 +1,7 @@
+{
+  "build": {
+    "env": {
+      "FIREBASE_ADMIN_CREDENTIALS": "@FIREBASE_ADMIN_CREDENTIALS"
+    }
+  }
+}

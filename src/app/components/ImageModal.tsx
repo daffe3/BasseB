@@ -1,6 +1,6 @@
 import React from "react";
 import { Dialog, DialogContent, IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import CloseIcon from "@mui/icons-material/CloseOutlined";
 
 interface ImageModalProps {
   isOpen: boolean;

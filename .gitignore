@@ -7,8 +7,10 @@
 .env.test.local
 .env.production.local
 
-# Firebase service account key (if stored separately as a file)
-config/basse-brodd-firebase-adminsdk-fbsvc-f67d5bffe1.json
+# Firebase service account key (do NOT commit to Git!)
+basse-brodd-firebase-adminsdk-fbsvc-f67d5bffe1.json
+# If you moved it to a 'config' folder, use:
+# config/basse-brodd-firebase-adminsdk-fbsvc-f67d5bffe1.json
 
 # dependencies
 /node_modules

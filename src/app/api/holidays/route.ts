@@ -7,11 +7,11 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const APP_TIMEZONE = 'Europe/Stockholm';
-const COUNTRY_CODE = 'SE'; 
+const COUNTRY_CODE = 'SE';
 
-let cachedHolidays: { [year: string]: dayjs.Dayjs[] } = {};
-let lastFetchTime: { [year: string]: number } = {};
-const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; 
+const cachedHolidays: { [year: string]: dayjs.Dayjs[] } = {};
+const lastFetchTime: { [year: string]: number } = {};
+const CACHE_DURATION_MS = 24 * 60 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
   try {

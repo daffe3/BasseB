@@ -1,53 +1,170 @@
 import { NextRequest, NextResponse } from 'next/server';
+import adminDb from '@/lib/firebase-admin'; 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import nodemailer from 'nodemailer';
+import * as admin from 'firebase-admin';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const APP_TIMEZONE = 'Europe/Stockholm';
-const COUNTRY_CODE = 'SE'; 
+const MAX_DAILY_ORDERS = 40;
 
-let cachedHolidays: { [year: string]: dayjs.Dayjs[] } = {};
-let lastFetchTime: { [year: string]: number } = {};
-const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; 
+let cachedPublicHolidays: dayjs.Dayjs[] = [];
+let lastHolidayFetchTimestamp: number = 0;
+const HOLIDAY_CACHE_DURATION_MS = 12 * 60 * 60 * 1000;
 
-export async function GET(req: NextRequest) {
+async function getPublicHolidays(): Promise<dayjs.Dayjs[]> {
+  if (cachedPublicHolidays.length > 0 && (Date.now() - lastHolidayFetchTimestamp < HOLIDAY_CACHE_DURATION_MS)) {
+    console.log('Fetching public holidays from backend cache.');
+    return cachedPublicHolidays;
+  }
+
   try {
-    const currentYear = dayjs().tz(APP_TIMEZONE).year();
-    const nextYear = currentYear + 1;
+    console.log('Fetching public holidays from internal /api/holidays route...');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/holidays`);
 
-    let allHolidays: dayjs.Dayjs[] = [];
-
-    for (const year of [currentYear, nextYear]) {
-      if (cachedHolidays[year] && (Date.now() - lastFetchTime[year] < CACHE_DURATION_MS)) {
-        allHolidays = allHolidays.concat(cachedHolidays[year]);
-        console.log(`Fetched holidays for ${year} from cache.`);
-      } else {
-        console.log(`Fetching holidays for ${year} from Nager.Date API...`);
-        const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${COUNTRY_CODE}`);
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch holidays for ${year} from external API: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        const yearHolidays = data.map((holiday: any) => dayjs(holiday.date).tz(APP_TIMEZONE));
-
-        cachedHolidays[year] = yearHolidays;
-        lastFetchTime[year] = Date.now();
-        allHolidays = allHolidays.concat(yearHolidays);
-        console.log(`Successfully fetched and cached holidays for ${year}.`);
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch public holidays from internal API: ${response.status} - ${errorText}`);
     }
 
-    const serializableHolidays = allHolidays.map(d => d.toISOString());
+    const data: string[] = await response.json();
+    const fetchedHolidays = data.map(dateStr => dayjs(dateStr).tz(APP_TIMEZONE));
 
-    return NextResponse.json(serializableHolidays, { status: 200 });
+    cachedPublicHolidays = fetchedHolidays;
+    lastHolidayFetchTimestamp = Date.now();
+    console.log('Successfully fetched and cached public holidays on backend.');
+    return fetchedHolidays;
+  } catch (error) {
+    console.error('Error fetching public holidays for backend validation:', error);
+    throw new Error("Could not retrieve public holidays for validation.");
+  }
+}
+
+const isPublicHoliday = (date: dayjs.Dayjs): boolean => {
+  return cachedPublicHolidays.some(holiday => holiday.isSame(date, 'day'));
+};
+
+export async function POST(req: NextRequest) {
+  try {
+    const { name, email, lunchOption, quantity, address, orderDate: orderDateString } = await req.json();
+
+    if (!name || !email || !lunchOption || !quantity || !address || !orderDateString) {
+      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    }
+    if (quantity <= 0) {
+      return NextResponse.json({ message: 'Quantity must be positive' }, { status: 400 });
+    }
+
+    const orderDate = dayjs(orderDateString).tz(APP_TIMEZONE);
+    const today = dayjs().tz(APP_TIMEZONE);
+
+    if (orderDate.isBefore(today.add(1, 'day').startOf('day'))) {
+      return NextResponse.json({ message: 'Orders can only be placed for tomorrow or later.' }, { status: 400 });
+    }
+
+    await getPublicHolidays();
+    if (orderDate.day() === 0 || orderDate.day() === 6) {
+      return NextResponse.json({ message: 'Orders cannot be placed on weekends.' }, { status: 400 });
+    }
+
+    if (isPublicHoliday(orderDate)) {
+      return NextResponse.json({ message: 'Orders cannot be placed on public holidays.' }, { status: 400 });
+    }
+
+    const ordersRef = adminDb.collection('lunch_orders');
+    const startOfDay = orderDate.startOf('day').toDate();
+    const endOfDay = orderDate.endOf('day').toDate();
+
+    const q = ordersRef.where('orderDate', '>=', startOfDay).where('orderDate', '<=', endOfDay);
+
+    const querySnapshot = await q.get();
+    const currentOrdersForDate = querySnapshot.size;
+
+    if (currentOrdersForDate + quantity > MAX_DAILY_ORDERS) {
+      return NextResponse.json(
+        { message: `Daily limit of ${MAX_DAILY_ORDERS} for ${orderDate.format('YYYY-MM-DD')} reached. Only ${MAX_DAILY_ORDERS - currentOrdersForDate} spots left.` },
+        { status: 400 }
+      );
+    }
+
+    await ordersRef.add({
+      name,
+      email,
+      lunchOption,
+      quantity,
+      address,
+      orderDate: admin.firestore.Timestamp.fromDate(orderDate.toDate()),
+      timestamp: admin.firestore.Timestamp.now(),
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const ownerMailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: process.env.EMAIL_TO_NOTIFY,
+      subject: `New Lunch Order for ${orderDate.format('YYYY-MM-DD')}`,
+      html: `
+        <p><strong>New Lunch Order Details:</strong></p>
+        <ul>
+          <li><strong>Customer Name:</strong> ${name}</li>
+          <li><strong>Customer Email:</strong> ${email}</li>
+          <li><strong>Delivery Address:</strong> ${address}</li>
+          <li><strong>Lunch Option:</strong> ${lunchOption}</li>
+          <li><strong>Quantity:</strong> ${quantity}</li>
+          <li><strong>Order Date:</strong> ${orderDate.format('YYYY-MM-DD')}</li>
+          <li><strong>Order Placed On:</strong> ${dayjs().tz(APP_TIMEZONE).format('YYYY-MM-DD HH:mm:ss')}</li>
+        </ul>
+        <p>Total orders for ${orderDate.format('YYYY-MM-DD')}: ${currentOrdersForDate + quantity} / ${MAX_DAILY_ORDERS}</p>
+      `,
+    };
+
+    const customerMailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: `Your Basse Brodd Lunch Order Confirmation for ${orderDate.format('YYYY-MM-DD')}`,
+      html: `
+        <p>Hello ${name},</p>
+        <p>Thank you for your order with Basse Brodd! Here are the details of your lunch delivery:</p>
+        <ul>
+          <li><strong>Order Date:</strong> ${orderDate.format('YYYY-MM-DD')}</li>
+          <li><strong>Lunch Option:</strong> ${lunchOption}</li>
+          <li><strong>Quantity:</strong> ${quantity}</li>
+          <li><strong>Delivery Address:</strong> ${address}</li>
+        </ul>
+        <p>We'll deliver your delicious lunch on ${orderDate.format('YYYY-MM-DD')}.</p>
+        <p>If you have any questions, please contact us at ${process.env.EMAIL_FROM}.</p>
+        <p>Best regards,<br/>The Basse Brodd Team</p>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(ownerMailOptions);
+      console.log('Notification email sent to owner successfully!');
+    } catch (ownerEmailError) {
+      console.error('Error sending owner notification email:', ownerEmailError);
+    }
+
+    try {
+      await transporter.sendMail(customerMailOptions);
+      console.log('Confirmation email sent to customer successfully!');
+    } catch (customerEmailError) {
+      console.error('Error sending customer confirmation email:', customerEmailError);
+    }
+
+    return NextResponse.json({ message: 'Order placed successfully!', currentOrders: currentOrdersForDate + quantity }, { status: 200 });
 
   } catch (error: any) {
-    console.error('Error fetching public holidays:', error);
-    return NextResponse.json({ message: 'Failed to retrieve public holidays', error: error.message }, { status: 500 });
+    console.error('Error processing lunch order:', error);
+    return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

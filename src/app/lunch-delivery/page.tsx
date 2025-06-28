@@ -94,31 +94,29 @@ export default function LunchOrderPage() {
     [holidays]
   );
 
-  const fetchDailyOrderCount = useCallback(
-    async (date: Dayjs | null) => {
-      if (!date) {
-        setDailyOrderCount(null);
-        return;
-      }
+  const fetchDailyOrderCount = useCallback(async (date: Dayjs | null) => {
+    if (!date) {
+      setDailyOrderCount(null);
+      return;
+    }
 
-      setLoadingCount(true);
-      try {
-        const formattedDate = date.format("YYYY-MM-DD");
-        const response = await fetch(`/api/order?date=${formattedDate}`);
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
-        const data = await response.json();
-        setDailyOrderCount(data.count);
-      } catch (error) {
-        console.error("Failed to fetch daily order count:", error);
-        setDailyOrderCount(null);
-      } finally {
-        setLoadingCount(false);
+    setLoadingCount(true);
+    try {
+      const formattedDate = date.format("YYYY-MM-DD");
+      const response = await fetch(`/api/order?date=${formattedDate}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error: ${response.status} - ${errorText}`);
       }
-    },
-    []
-  );
+      const data = await response.json();
+      setDailyOrderCount(data.count);
+    } catch (error) {
+      console.error("Failed to fetch daily order count:", error);
+      setDailyOrderCount(null);
+    } finally {
+      setLoadingCount(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (orderDate) {
@@ -144,6 +142,17 @@ export default function LunchOrderPage() {
 
     setSubmittingOrder(true);
     setOrderMessage(null);
+
+    console.log("Attempting to submit order with data:");
+    console.log("Name:", name);
+    console.log("Email:", email);
+    console.log("Address:", address);
+    console.log("Lunch Option:", lunchOption);
+    console.log("Quantity:", quantity);
+    console.log(
+      "Order Date (ISO String):",
+      orderDate ? orderDate.toISOString() : "null"
+    );
 
     try {
       const response = await fetch("/api/order", {
@@ -177,7 +186,7 @@ export default function LunchOrderPage() {
       setQuantity(1);
       setOrderDate(null);
       setDailyOrderCount(null);
-    } catch (error: unknown) { 
+    } catch (error: unknown) {
       console.error("Order submission failed:", error);
       setSnackbarSeverity("error");
       setSnackbarMessage(

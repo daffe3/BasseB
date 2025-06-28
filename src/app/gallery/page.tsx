@@ -38,7 +38,7 @@ export default function GalleryPage() {
     : ITEMS_PER_PAGE_DESKTOP;
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null); // Corrected type
+  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null); 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {

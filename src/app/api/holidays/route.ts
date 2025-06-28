@@ -13,7 +13,12 @@ const cachedHolidays: { [year: string]: dayjs.Dayjs[] } = {};
 const lastFetchTime: { [year: string]: number } = {};
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000;
 
-export async function GET(req: NextRequest) {
+interface PublicHoliday {
+  date: string;
+  name: string;
+}
+
+export async function GET(_req: NextRequest) {
   try {
     const currentYear = dayjs().tz(APP_TIMEZONE).year();
     const nextYear = currentYear + 1;
@@ -32,8 +37,8 @@ export async function GET(req: NextRequest) {
           throw new Error(`Failed to fetch holidays for ${year} from external API: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        const yearHolidays = data.map((holiday: any) => dayjs(holiday.date).tz(APP_TIMEZONE));
+        const data: PublicHoliday[] = await response.json(); 
+        const yearHolidays = data.map((holiday) => dayjs(holiday.date).tz(APP_TIMEZONE));
 
         cachedHolidays[year] = yearHolidays;
         lastFetchTime[year] = Date.now();
@@ -46,8 +51,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(serializableHolidays, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) { 
     console.error('Error fetching public holidays:', error);
-    return NextResponse.json({ message: 'Failed to retrieve public holidays', error: error.message }, { status: 500 });
+    let errorMessage = 'An unknown error occurred.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return NextResponse.json({ message: 'Failed to retrieve public holidays', error: errorMessage }, { status: 500 });
   }
 }

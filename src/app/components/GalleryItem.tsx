@@ -1,13 +1,15 @@
 import React from "react";
 import { Box, Typography, Grid, useTheme } from "@mui/material";
 
+interface GalleryItemData {
+  id: number;
+  name: string;
+  imageSrc: string;
+}
+
 interface GalleryItemProps {
-  item: {
-    id: number;
-    name: string;
-    imageSrc: string;
-  };
-  onImageClick: (item: any) => void;
+  item: GalleryItemData;
+  onImageClick: (item: GalleryItemData) => void;
 }
 
 const GalleryItem: React.FC<GalleryItemProps> = ({ item, onImageClick }) => {

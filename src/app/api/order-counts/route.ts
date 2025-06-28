@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import adminDb from '@/lib/firebase-admin'; 
+import adminDb from '@/lib/firebase-admin';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -38,9 +38,13 @@ async function getPublicHolidays(): Promise<dayjs.Dayjs[]> {
     lastHolidayFetchTimestamp = Date.now();
     console.log('Successfully fetched and cached public holidays on backend.');
     return fetchedHolidays;
-  } catch (error) {
+  } catch (error: unknown) { 
     console.error('Error fetching public holidays for backend validation:', error);
-    throw new Error("Could not retrieve public holidays for validation.");
+    let errorMessage = "Could not retrieve public holidays for validation.";
+    if (error instanceof Error) {
+        errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
   }
 }
 
@@ -150,21 +154,25 @@ export async function POST(req: NextRequest) {
     try {
       await transporter.sendMail(ownerMailOptions);
       console.log('Notification email sent to owner successfully!');
-    } catch (ownerEmailError) {
+    } catch (ownerEmailError: unknown) { 
       console.error('Error sending owner notification email:', ownerEmailError);
     }
 
     try {
       await transporter.sendMail(customerMailOptions);
       console.log('Confirmation email sent to customer successfully!');
-    } catch (customerEmailError) {
+    } catch (customerEmailError: unknown) { 
       console.error('Error sending customer confirmation email:', customerEmailError);
     }
 
     return NextResponse.json({ message: 'Order placed successfully!', currentOrders: currentOrdersForDate + quantity }, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) { 
     console.error('Error processing lunch order:', error);
-    return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
+    let errorMessage = 'Internal Server Error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }

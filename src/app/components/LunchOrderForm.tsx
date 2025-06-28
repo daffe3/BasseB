@@ -23,6 +23,7 @@ interface OrderFormProps {
   quantity: number;
   setQuantity: (value: number) => void;
   availableLunchOptions: string[];
+  // submittingOrder: boolean; // Removed this line
   handleSubmit: (event: React.FormEvent) => void;
   isSubmitDisabled: boolean;
 }
@@ -39,6 +40,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   quantity,
   setQuantity,
   availableLunchOptions,
+  // submittingOrder, // Removed this line
   handleSubmit,
   isSubmitDisabled,
 }) => {

@@ -45,6 +45,7 @@ export default function OrderDateSelection({
         }}
         minDate={dayjs().add(1, "day").tz(APP_TIMEZONE)}
         shouldDisableDate={shouldDisableDate}
+        enableAccessibleFieldDOMStructure={false} // <--- ADD THIS LINE
         slots={{
           textField: TextField,
         }}

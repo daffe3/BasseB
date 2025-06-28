@@ -52,7 +52,7 @@ export default function ContactPage() {
           }}
         >
           <img
-            src="/public/images/basse-kock.png"
+            src="/images/basse-kock.png"
             alt="Basse Brodd & Owner"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
@@ -109,12 +109,10 @@ export default function ContactPage() {
       >
         <a href="#" target="_blank" rel="noopener noreferrer">
           <img
-            src="/images/social-facebook.png"
+            src="/images/Facebook.png"
             alt="Facebook"
             style={{ width: 40, height: 40 }}
           />
-        </a>
-        <a href="#" target="_blank" rel="noopener noreferrer">
           <img
             src="/images/social-instagram.png"
             alt="Instagram"

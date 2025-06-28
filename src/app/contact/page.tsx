@@ -114,7 +114,7 @@ export default function ContactPage() {
             style={{ width: 40, height: 40 }}
           />
           <img
-            src="/images/social-instagram.png"
+            src="/images/Instagram.png"
             alt="Instagram"
             style={{ width: 40, height: 40 }}
           />

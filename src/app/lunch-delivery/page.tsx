@@ -22,12 +22,7 @@ dayjs.extend(isSameOrBefore);
 
 const APP_TIMEZONE = "Europe/Stockholm";
 const MAX_DAILY_ORDERS = 40;
-const availableLunchOptions = [
-  "Chicken Salad",
-  "Veggie Burger",
-  "Salmon Fillet",
-  "Pasta Primavera",
-];
+const availableLunchOptions = ["Chicken", "Veggie", "Fish", "Meat"];
 
 export default function LunchOrderPage() {
   const [name, setName] = useState("");

@@ -1,31 +1,33 @@
 import React from "react";
 import {
-  TextField,
-  Button,
-  MenuItem,
   Box,
-  CircularProgress,
-  Typography,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+  Grid,
 } from "@mui/material";
 
 interface OrderFormProps {
   name: string;
-  setName: (name: string) => void;
+  setName: (value: string) => void;
   email: string;
-  setEmail: (email: string) => void;
+  setEmail: (value: string) => void;
   address: string;
-  setAddress: (address: string) => void;
+  setAddress: (value: string) => void;
   lunchOption: string;
-  setLunchOption: (option: string) => void;
+  setLunchOption: (value: string) => void;
   quantity: number;
-  setQuantity: (quantity: number) => void;
+  setQuantity: (value: number) => void;
   availableLunchOptions: string[];
-  submittingOrder: boolean;
-  handleSubmit: (e: React.FormEvent) => void;
+  handleSubmit: (event: React.FormEvent) => void;
   isSubmitDisabled: boolean;
 }
 
-export default function OrderForm({
+const OrderForm: React.FC<OrderFormProps> = ({
   name,
   setName,
   email,
@@ -37,92 +39,88 @@ export default function OrderForm({
   quantity,
   setQuantity,
   availableLunchOptions,
-  submittingOrder,
   handleSubmit,
   isSubmitDisabled,
-}: OrderFormProps) {
+}) => {
   return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit}
-      sx={{
-        maxWidth: 600,
-        mx: "auto",
-        p: 3,
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 12px",
-      }}
-    >
-      <TextField
-        label="Your Name"
-        fullWidth
-        margin="normal"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-      />
-      <TextField
-        label="Your Email"
-        fullWidth
-        margin="normal"
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <TextField
-        label="Delivery Address"
-        fullWidth
-        margin="normal"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        required
-      />
-      <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
-        <TextField
-          select
-          label="Lunch Option"
-          value={lunchOption}
-          onChange={(e) => setLunchOption(e.target.value)}
-          fullWidth
-          required
-        >
-          {availableLunchOptions.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          label="Quantity"
-          type="number"
-          value={quantity}
-          onChange={(e) =>
-            setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-          }
-          inputProps={{ min: 1 }}
-          fullWidth
-          required
-        />
-      </Box>
-      <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
-        Today's delicious choices!
-      </Typography>
-      <Button
-        type="submit"
-        variant="contained"
-        color="primary"
-        fullWidth
-        sx={{ mt: 3, py: 1.5 }}
-        disabled={isSubmitDisabled}
-      >
-        {submittingOrder ? (
-          <CircularProgress size={24} color="inherit" />
-        ) : (
-          "Place Order"
-        )}
-      </Button>
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 4 }}>
+      <Grid container spacing={3}>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Delivery Address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            required
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth required>
+            <InputLabel>Lunch Option</InputLabel>
+            <Select
+              value={lunchOption}
+              label="Lunch Option"
+              onChange={(e) => setLunchOption(e.target.value as string)}
+            >
+              <MenuItem value="">
+                <em>Select an option</em>
+              </MenuItem>
+              {availableLunchOptions.map((option) => (
+                <MenuItem key={option} value={option.toLowerCase()}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>Today&apos;s delicious choices!</FormHelperText>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Quantity"
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(parseInt(e.target.value))}
+            inputProps={{
+              min: 1,
+            }}
+            required
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{ mt: 2 }}
+            disabled={isSubmitDisabled}
+          >
+            Place Order
+          </Button>
+        </Grid>
+      </Grid>
     </Box>
   );
-}
+};
+
+export default OrderForm;

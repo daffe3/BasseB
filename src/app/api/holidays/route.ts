@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'; 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -18,7 +18,7 @@ interface PublicHoliday {
   name: string;
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const currentYear = dayjs().tz(APP_TIMEZONE).year();
     const nextYear = currentYear + 1;
@@ -37,7 +37,7 @@ export async function GET(_req: NextRequest) {
           throw new Error(`Failed to fetch holidays for ${year} from external API: ${response.statusText}`);
         }
 
-        const data: PublicHoliday[] = await response.json(); 
+        const data: PublicHoliday[] = await response.json();
         const yearHolidays = data.map((holiday) => dayjs(holiday.date).tz(APP_TIMEZONE));
 
         cachedHolidays[year] = yearHolidays;
@@ -51,12 +51,8 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json(serializableHolidays, { status: 200 });
 
-  } catch (error: unknown) { 
+  } catch (error: unknown) {
     console.error('Error fetching public holidays:', error);
-    let errorMessage = 'An unknown error occurred.';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    return NextResponse.json({ message: 'Failed to retrieve public holidays', error: errorMessage }, { status: 500 });
+    return NextResponse.json({ message: 'Failed to fetch public holidays.' }, { status: 500 });
   }
 }

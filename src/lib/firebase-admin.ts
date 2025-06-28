@@ -21,7 +21,6 @@ if (fs.existsSync(serviceAccountPath)) {
 if (!serviceAccountJson && process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64) {
   console.log('FIREBASE_ADMIN_CREDENTIALS_BASE64 environment variable is detected.');
   console.log('Length of Base64 string:', process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64.length);
-
   try {
     const decoded = Buffer.from(
       process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64,
@@ -32,7 +31,6 @@ if (!serviceAccountJson && process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64) {
     console.log('Successfully parsed FIREBASE_ADMIN_CREDENTIALS_BASE64.');
   } catch (err) {
     console.error('Failed to decode or parse FIREBASE_ADMIN_CREDENTIALS_BASE64:', err);
-
   }
 } else if (!serviceAccountJson) {
   console.log('FIREBASE_ADMIN_CREDENTIALS_BASE64 is NOT present or serviceAccountJson already obtained.');

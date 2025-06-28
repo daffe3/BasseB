@@ -1,57 +1,44 @@
-import * as admin from 'firebase-admin';
-import { credential, ServiceAccount } from 'firebase-admin';
-import * as fs from 'fs';
-import * as path from 'path';
+import admin from 'firebase-admin';
+import fs from 'fs';
+import path from 'path';
 
-let serviceAccountJson: ServiceAccount | undefined;
+let serviceAccountJson: admin.ServiceAccount | null = null;
 
-if (process.env.NODE_ENV === 'development') {
+const serviceAccountPath = path.resolve(process.cwd(), 'service-account.json');
+if (fs.existsSync(serviceAccountPath)) {
   try {
-    const serviceAccountPath = path.resolve(process.cwd(), 'basse-brodd-firebase-adminsdk-fbsvc-f67d5bffe1.json');
-    const localServiceAccountContent = fs.readFileSync(serviceAccountPath, 'utf8');
-    serviceAccountJson = JSON.parse(localServiceAccountContent) as ServiceAccount;
-    console.log('Local Firebase service account file loaded successfully for development.');
-  } catch (_e) {
-    console.warn('Local Firebase service account file not found or could not be parsed. Falling back to environment variable for local development if set. Error: ', (_e as Error).message);
+    const file = fs.readFileSync(serviceAccountPath, 'utf8');
+    serviceAccountJson = JSON.parse(file);
+    console.log('Using service-account.json for Firebase Admin SDK');
+  } catch (err) {
+    console.error('Failed to read service-account.json:', err);
   }
 }
 
-console.log('--- VERCEL ENV VAR CHECK ---');
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('FIREBASE_ADMIN_CREDENTIALS_BASE64 is defined:', !!process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64);
-if (process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64) {
-  console.log('Length of FIREBASE_ADMIN_CREDENTIALS_BASE64:', process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64.length);
-}
-console.log('--- END VERCEL ENV VAR CHECK ---');
+if (!serviceAccountJson && process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64) {
+  try {
+    const decoded = Buffer.from(
+      process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64,
+      'base64'
+    ).toString('utf-8');
 
+    serviceAccountJson = JSON.parse(decoded);
+    console.log('Using FIREBASE_ADMIN_CREDENTIALS_BASE64 for Firebase Admin SDK');
+  } catch (err) {
+    console.error('Failed to parse FIREBASE_ADMIN_CREDENTIALS_BASE64:', err);
+  }
+}
+
+if (!serviceAccountJson) {
+  throw new Error(
+    'Firebase Admin SDK credentials are not provided via Base64 environment variable or local file.'
+  );
+}
 
 if (!admin.apps.length) {
-  try {
-    let credentialsToUse: ServiceAccount;
-
-    if (process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64) {
-      try {
-        const decodedCredentials = Buffer.from(process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64, 'base64').toString('utf-8');
-        credentialsToUse = JSON.parse(decodedCredentials) as ServiceAccount;
-        console.log('Firebase Admin SDK credentials loaded from Base64 environment variable.');
-      } catch (decodeParseError) {
-        console.error("Error decoding or parsing FIREBASE_ADMIN_CREDENTIALS_BASE64 from environment variable:", decodeParseError);
-        throw new Error("Failed to decode or parse Base64 Firebase Admin credentials.");
-      }
-    } else if (serviceAccountJson) {
-      credentialsToUse = serviceAccountJson;
-    } else {
-      throw new Error('Firebase Admin SDK credentials are not provided via Base64 environment variable or local file.');
-    }
-
-    admin.initializeApp({
-      credential: credential.cert(credentialsToUse),
-    });
-    console.log('Firebase Admin SDK initialized successfully.');
-  } catch (error) {
-    console.error('Firebase Admin SDK initialization error:', error);
-    throw error;
-  }
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccountJson),
+  });
 }
 
-export default admin.firestore();
+export default admin;

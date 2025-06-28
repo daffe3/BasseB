@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import { credential, ServiceAccount } from 'firebase-admin';
-import * as fs from 'fs'; 
-import * as path from 'path'; 
+import * as fs from 'fs';
+import * as path from 'path';
 
 let serviceAccountJson: ServiceAccount | undefined;
 
@@ -11,10 +11,19 @@ if (process.env.NODE_ENV === 'development') {
     const localServiceAccountContent = fs.readFileSync(serviceAccountPath, 'utf8');
     serviceAccountJson = JSON.parse(localServiceAccountContent) as ServiceAccount;
     console.log('Local Firebase service account file loaded successfully for development.');
-  } catch (_e) { 
+  } catch (_e) {
     console.warn('Local Firebase service account file not found or could not be parsed. Falling back to environment variable for local development if set. Error: ', (_e as Error).message);
   }
 }
+
+console.log('--- VERCEL ENV VAR CHECK ---');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('FIREBASE_ADMIN_CREDENTIALS_BASE64 is defined:', !!process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64);
+if (process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64) {
+  console.log('Length of FIREBASE_ADMIN_CREDENTIALS_BASE64:', process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64.length);
+}
+console.log('--- END VERCEL ENV VAR CHECK ---');
+
 
 if (!admin.apps.length) {
   try {

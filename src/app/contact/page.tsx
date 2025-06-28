@@ -43,46 +43,29 @@ export default function ContactPage() {
             width: { xs: 120, sm: 150, md: 180 },
             height: { xs: 120, sm: 150, md: 180 },
             borderRadius: "50%",
-            overflow: "hidden",
-            mb: { xs: 1.5, md: 2 },
-            border: "4px solid",
-            borderColor: "secondary.main",
-            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+            bgcolor: "grey.200",
             display: "flex",
-            justifyContent: "center",
             alignItems: "center",
+            justifyContent: "center",
+            mb: 2,
+            overflow: "hidden",
           }}
-          aria-label="Profile picture of Chef Bassecool"
         >
           <img
-            src="/images/Basse-kock.png"
-            alt="Profile picture of Chef Bassecool"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
+            src="/public/images/basse-kock.png"
+            alt="Basse Brodd & Owner"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </Box>
         <Typography
           variant="h5"
           component="h2"
           sx={{
-            fontWeight: "bold",
-            fontSize: { xs: "1.25rem", sm: "1.5rem", md: "1.75rem" },
+            fontWeight: "medium",
+            fontSize: { xs: "1.25rem", sm: "1.5rem" },
           }}
         >
-          Chef Bassecool
-        </Typography>
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          sx={{
-            fontSize: { xs: "0.875rem", sm: "1rem" },
-          }}
-        >
-          Head Chef & Owner
+          Basse Brodd &amp; Owner
         </Typography>
       </Box>
 
@@ -90,7 +73,7 @@ export default function ContactPage() {
         variant="body1"
         sx={{ mb: { xs: 1.5, md: 2 }, fontSize: { xs: "0.9rem", sm: "1rem" } }}
       >
-        Have questions or need a custom quote? We're here to help!
+        Have questions or need a custom quote? We&apos;re here to help!
       </Typography>
 
       <Typography
@@ -120,24 +103,23 @@ export default function ContactPage() {
         sx={{
           display: "flex",
           justifyContent: "center",
-          gap: { xs: 1, sm: 2 },
+          gap: { xs: 2, sm: 3 },
+          flexWrap: "wrap",
         }}
       >
-        <a
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ fontSize: "0.9rem" }}
-        >
-          Facebook
+        <a href="#" target="_blank" rel="noopener noreferrer">
+          <img
+            src="/images/social-facebook.png"
+            alt="Facebook"
+            style={{ width: 40, height: 40 }}
+          />
         </a>
-        <a
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ fontSize: "0.9rem" }}
-        >
-          Instagram
+        <a href="#" target="_blank" rel="noopener noreferrer">
+          <img
+            src="/images/social-instagram.png"
+            alt="Instagram"
+            style={{ width: 40, height: 40 }}
+          />
         </a>
       </Box>
     </Box>

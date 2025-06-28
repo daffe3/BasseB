@@ -11,22 +11,20 @@ import {
   Grid,
 } from "@mui/material";
 
-interface OrderFormProps { 
+interface OrderFormProps {
   name: string;
-  setName: (value: string) => void; 
+  setName: (value: string) => void;
   email: string;
-  setEmail: (value: string) => void; 
+  setEmail: (value: string) => void;
   address: string;
-  setAddress: (value: string) => void; 
+  setAddress: (value: string) => void;
   lunchOption: string;
-  setLunchOption: (value: string) => void; 
+  setLunchOption: (value: string) => void;
   quantity: number;
-  setQuantity: (value: number) => void; 
-  availableLunchOptions: string[]; 
-  submittingOrder: boolean; 
-  handleSubmit: (event: React.FormEvent) => void; 
-  isSubmitDisabled: boolean; 
-
+  setQuantity: (value: number) => void;
+  availableLunchOptions: string[];
+  handleSubmit: (event: React.FormEvent) => void;
+  isSubmitDisabled: boolean;
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
@@ -40,8 +38,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   setLunchOption,
   quantity,
   setQuantity,
-  availableLunchOptions, 
-  submittingOrder,
+  availableLunchOptions,
   handleSubmit,
   isSubmitDisabled,
 }) => {
@@ -51,7 +48,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Your Name"
+            label="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -60,7 +57,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Your Email"
+            label="Email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -74,8 +71,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             required
-            multiline
-            rows={3}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -95,7 +90,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 </MenuItem>
               ))}
             </Select>
-            <FormHelperText>Today's delicious choices!</FormHelperText>
+            <FormHelperText>Today&apos;s delicious choices!</FormHelperText>
           </FormControl>
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -118,7 +113,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
             size="large"
             fullWidth
             sx={{ mt: 2 }}
-            disabled={isSubmitDisabled} 
+            disabled={isSubmitDisabled}
           >
             Place Order
           </Button>

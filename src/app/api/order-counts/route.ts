@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import adminDb from '@/lib/firebase-admin';
+import { adminDb, admin } from '@/lib/firebase-admin';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import nodemailer from 'nodemailer';
-import * as admin from 'firebase-admin';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);

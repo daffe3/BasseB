@@ -99,7 +99,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Orders can only be placed for tomorrow or later.' }, { status: 400 });
     }
 
-    await getPublicHolidays();
+    try {
+      await getPublicHolidays();
+    } catch (holidayError: unknown) {
+      console.error('Error in POST: Failed to fetch public holidays:', holidayError);
+      let errorMessage = "Failed to validate order date against public holidays.";
+      if (holidayError instanceof Error) {
+        errorMessage = holidayError.message;
+      }
+      return NextResponse.json({ message: errorMessage }, { status: 500 });
+    }
+
     if (orderDate.day() === 0 || orderDate.day() === 6) {
       return NextResponse.json({ message: 'Orders cannot be placed on weekends.' }, { status: 400 });
     }
@@ -114,8 +124,16 @@ export async function POST(req: NextRequest) {
 
     const q = ordersRef.where('orderDate', '>=', startOfDay).where('orderDate', '<=', endOfDay);
 
-    const querySnapshot = await q.get();
-    const currentOrdersForDate = querySnapshot.size;
+    let currentOrdersForDate = 0;
+    try {
+      const querySnapshot = await q.get();
+      currentOrdersForDate = querySnapshot.size;
+      console.log(`Current orders for ${orderDate.format('YYYY-MM-DD')}: ${currentOrdersForDate}`);
+    } catch (firestoreGetError: unknown) {
+      console.error('Firestore Error: Failed to get current order count:', firestoreGetError);
+      return NextResponse.json({ message: 'Failed to retrieve daily order count for validation.' }, { status: 500 });
+    }
+
 
     if (currentOrdersForDate + quantity > MAX_DAILY_ORDERS) {
       return NextResponse.json(
@@ -124,15 +142,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await ordersRef.add({
-      name,
-      email,
-      lunchOption,
-      quantity,
-      address,
-      orderDate: admin.firestore.Timestamp.fromDate(orderDate.toDate()),
-      timestamp: admin.firestore.Timestamp.now(),
-    });
+    try {
+      await ordersRef.add({
+        name,
+        email,
+        lunchOption,
+        quantity,
+        address,
+        orderDate: admin.firestore.Timestamp.fromDate(orderDate.toDate()),
+        timestamp: admin.firestore.Timestamp.now(),
+      });
+      console.log('Order successfully added to Firebase Firestore.');
+    } catch (firebaseAddError: unknown) {
+      console.error('Firebase Error: Failed to add order to Firestore:', firebaseAddError);
+      let errorMessage = 'Failed to save order to database.';
+      if (firebaseAddError instanceof Error) {
+        errorMessage = firebaseAddError.message;
+      }
+      return NextResponse.json({ message: errorMessage }, { status: 500 });
+    }
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -182,22 +210,22 @@ export async function POST(req: NextRequest) {
 
     try {
       await transporter.sendMail(ownerMailOptions);
-      console.log('Notification email sent to owner successfully!');
+      console.log('Nodemailer: Notification email sent to owner successfully!');
     } catch (ownerEmailError: unknown) {
-      console.error('Error sending owner notification email:', ownerEmailError);
+      console.error('Nodemailer Error: Failed to send owner notification email:', ownerEmailError);
     }
 
     try {
       await transporter.sendMail(customerMailOptions);
-      console.log('Confirmation email sent to customer successfully!');
+      console.log('Nodemailer: Confirmation email sent to customer successfully!');
     } catch (customerEmailError: unknown) {
-      console.error('Error sending customer confirmation email:', customerEmailError);
+      console.error('Nodemailer Error: Failed to send customer confirmation email:', customerEmailError);
     }
 
     return NextResponse.json({ message: 'Order placed successfully!', currentOrders: currentOrdersForDate + quantity }, { status: 200 });
 
   } catch (error: unknown) {
-    console.error('Error processing lunch order:', error);
+    console.error('Critical Error processing lunch order (unhandled exception in POST /api/order):', error);
     let errorMessage = 'Internal Server Error';
     if (error instanceof Error) {
       errorMessage = error.message;

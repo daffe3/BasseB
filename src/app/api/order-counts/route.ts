@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin'; 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -8,30 +7,47 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const APP_TIMEZONE = 'Europe/Stockholm';
+const COUNTRY_CODE = 'SE'; 
+
+let cachedHolidays: { [year: string]: dayjs.Dayjs[] } = {};
+let lastFetchTime: { [year: string]: number } = {};
+const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; 
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const dateString = searchParams.get('date');
+    const currentYear = dayjs().tz(APP_TIMEZONE).year();
+    const nextYear = currentYear + 1;
 
-    if (!dateString) {
-      return NextResponse.json({ message: 'Date parameter is required' }, { status: 400 });
+    let allHolidays: dayjs.Dayjs[] = [];
+
+    for (const year of [currentYear, nextYear]) {
+      if (cachedHolidays[year] && (Date.now() - lastFetchTime[year] < CACHE_DURATION_MS)) {
+        allHolidays = allHolidays.concat(cachedHolidays[year]);
+        console.log(`Fetched holidays for ${year} from cache.`);
+      } else {
+        console.log(`Fetching holidays for ${year} from Nager.Date API...`);
+        const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${COUNTRY_CODE}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch holidays for ${year} from external API: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const yearHolidays = data.map((holiday: any) => dayjs(holiday.date).tz(APP_TIMEZONE));
+
+        cachedHolidays[year] = yearHolidays;
+        lastFetchTime[year] = Date.now();
+        allHolidays = allHolidays.concat(yearHolidays);
+        console.log(`Successfully fetched and cached holidays for ${year}.`);
+      }
     }
 
-    const targetDate = dayjs(dateString).tz(APP_TIMEZONE);
-    const startOfDay = targetDate.startOf('day').toDate();
-    const endOfDay = targetDate.endOf('day').toDate();
+    const serializableHolidays = allHolidays.map(d => d.toISOString());
 
-    const ordersRef = adminDb.collection('lunch_orders'); 
-    const q = ordersRef.where('orderDate', '>=', startOfDay).where('orderDate', '<=', endOfDay); 
+    return NextResponse.json(serializableHolidays, { status: 200 });
 
-    const querySnapshot = await q.get(); 
-    const currentOrders = querySnapshot.size;
-
-    return NextResponse.json({ date: dateString, count: currentOrders }, { status: 200 });
-
-  } catch (error) {
-    console.error('Error fetching daily order count:', error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error fetching public holidays:', error);
+    return NextResponse.json({ message: 'Failed to retrieve public holidays', error: error.message }, { status: 500 });
   }
 }

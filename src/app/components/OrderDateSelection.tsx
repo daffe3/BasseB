@@ -45,9 +45,21 @@ export default function OrderDateSelection({
         }}
         minDate={dayjs().add(1, "day").tz(APP_TIMEZONE)}
         shouldDisableDate={shouldDisableDate}
-        renderInput={(params) => (
-          <TextField {...params} fullWidth margin="normal" />
-        )}
+        // Old: renderInput={(params) => (<TextField {...params} fullWidth margin="normal" />)}
+        // New: Use slots and slotProps
+        slots={{
+          textField: TextField,
+        }}
+        slotProps={{
+          textField: {
+            fullWidth: true,
+            margin: "normal",
+            // You can pass any other TextField props here that you need
+            // For example, if you need error/helperText, you might pass them from DatePicker's internal state:
+            // error: params.error,
+            // helperText: params.helperText,
+          },
+        }}
       />
       <Typography variant="subtitle1" sx={{ mt: 1 }}>
         Order at least one day in advance. (Weekends & Holidays are disabled)

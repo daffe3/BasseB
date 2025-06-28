@@ -12,6 +12,8 @@ basse-brodd-firebase-adminsdk-fbsvc-f67d5bffe1.json
 # If you moved it to a 'config' folder, use:
 # config/basse-brodd-firebase-adminsdk-fbsvc-f67d5bffe1.json
 
+service-account.json
+
 # dependencies
 /node_modules
 /.pnp
